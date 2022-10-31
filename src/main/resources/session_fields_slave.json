@@ -1,0 +1,7 @@
+{
+  "packageId":"${#packageId}",
+  "signerId":"${#signerId}",
+  "sessionFields":{
+    "Batch Signed By Master Package":"${#evidence}"
+  }
+}
