@@ -1,0 +1,15 @@
+*.class
+*.iml
+*.idea
+*.ipr
+*.iws
+*.DS_Store
+target
+*.zip
+*.classpath
+*.project
+*.settings
+/bin
+/*.pdf
+/tester/*.pdf
+src/test/resources/
