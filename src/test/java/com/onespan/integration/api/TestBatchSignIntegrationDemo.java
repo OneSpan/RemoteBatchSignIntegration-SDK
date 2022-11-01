@@ -25,38 +25,16 @@ public class TestBatchSignIntegrationDemo {
 
     private static final org.apache.logging.log4j.Logger logger = LogManager.getLogger(BatchSignIntegration.class);
 
-    //q2 poornima test parent account:  poornimakalivarapu+86@gmail.com
-//    String senderApiKey   = "blRrTXNHUkQ2VndFOlZ6b3JHYWYyak1rOA==";    //qesintegrator@gmail.com    blRrTXNHUkQ2VndFOlZ6b3JHYWYyak1rOA==
-//    String signerApiKey   = "eEc0YTVXZG9HeTA5OlZ6b3JHYWYyak1rOA==";    //batchsign@gmail.com    eEc0YTVXZG9HeTA5OlZ6b3JHYWYyak1rOA==
-//    String server         = "ossq2.rnd.esignlive.com";
-
-    //q3
-//    String senderApiKey = "VUNIcDRIbkc1M1VaOk12OFhOWno2Y3Y0Tg==";    //q3 jtao test account
-//    String signerApiKey = "dVdsY1R0QjVMUUlTOk12OFhOWno2Y3Y0Tg==";    //q3 @silanis test account
-//    String server = "ossq3.rnd.esignlive.com";
-
     //q2
-//    String senderApiKey         = "YWlkOEkxSDM5Wm84OmVIVnVhODBINmY0Vg==";    //  jtao
-
-    String senderApiKey   = "aXpXd2hSUERtTklXOmVIVnVhODBINmY0Vg==";    //  sender.batchsigner@mail.com   aXpXd2hSUERtTklXOmVIVnVhODBINmY0Vg==
-    String signerApiKey	= "VFR3Y0dMS0tmUE1LOmVIVnVhODBINmY0Vg==";    //  signer.directornumber1@mail.com    VFR3Y0dMS0tmUE1LOmVIVnVhODBINmY0Vg==
+    String senderApiKey   = "{senderApiKey}";
+    String signerApiKey	= "{singerApiKey}";
     String server         = "ossq2.rnd.esignlive.com";
 
-    //q1
-//    String senderApiKey = "R25VenBPS294ZEFPOkVXQUs1RGlHOW53Vw==";       // q1 batchSigner sender apikey
-//    String signerApiKey = "NmUzWWhJaU9ycU03OkVXQUs1RGlHOW53Vw==";      //q1 director number1
-//    String server = "ossq1.rnd.esignlive.com";
 
-
-    //customize master package
-//    String signerEmail = "batchsign@gmail.com";    //poornima test
-
-//    String signerEmail = "jinsong_tao@silanis.com";  //q3 silanis
-
-    String signerEmail = "directornumber1@mail.com";  //q1 alan.carter q2 jtao
+    String signerEmail = "{signerEmail}";  //q1 alan.carter q2 jtao
     String packageName = "Batch Signing Master Package";
-    String batchSignConsentPath = "src/test/resources/batchSignConsent.txt";
-    String signingMethod = "swisscomdirect:eidas";    //test signing method: personalCertificateSigning | swisscomdirect:eidas | swisscomdirect
+    String batchSignConsentPath = "batchSignConsent file path";
+    String signingMethod = "swisscomdirect:eidas";    // swisscomdirect:eidas | swisscomdirect:zertes
 
     String protocol = "https";
 
@@ -187,45 +165,6 @@ public class TestBatchSignIntegrationDemo {
     }
 
 
-    //debug/ debug/ debug
-    @Test
-    public void testdebugUpdateTxAttr() throws IOException{
-
-//        URL url = Resources.getResource("performance/transaction-update-status-draft.json");
-//        URL url = Resources.getResource("performance/transaction-update-status-sent.json");
-
-        URL url = Resources.getResource("performance/transaction-update-attr2.json");
-        String jsonInput = Resources.toString(url, StandardCharsets.UTF_8);
-        JSONObject update = new JSONObject(jsonInput);
-        System.out.println("-->update-attr: " + update);
-
-        BatchSignIntegration integration = new BatchSignIntegration(protocol, server, signerApiKey);
-        String attr = integration.updateTransactionAttribute("V4ELulC3wI7mgZ-oq45aZuE1wWI=", jsonInput);
-        System.out.println("-->" + attr);
-
-    }
-
-    @Test
-    public void testdebugDownloadEvidence() throws IOException{
-        BatchSignIntegration integration = new BatchSignIntegration(protocol, server, signerApiKey);
-        String resp = integration.downloadEvidence("E6hXtKAFQ-QIsdik5xk8BqMpoMw=");
-
-        String path = "/tmp/summary.txt";
-        Files.write( Paths.get(path), resp.getBytes(StandardCharsets.UTF_8));
-        System.out.println("-->" + resp);
-
-    }
-
-    @Test
-    public void testdebugUpdateEvidence() throws IOException{
-        BatchSignIntegration integration = new BatchSignIntegration(protocol, server, signerApiKey);
-        String resp = integration.updateEvidence("oiTSN3Wx3k-8LoyS0t5SOqRC4kk=");
-
-
-        System.out.println("-->" + resp);
-
-    }
-
 
 
     //utility method for test/demo
@@ -236,7 +175,7 @@ public class TestBatchSignIntegrationDemo {
             file.write(String.valueOf(pageinfo));
             file.flush();
 
-        } catch (IOException e) {//test signing method: personalCertificateSigning / swisscomdirect:eidas / swisscomdirect
+        } catch (IOException e) {
             e.printStackTrace();
         }
     }
