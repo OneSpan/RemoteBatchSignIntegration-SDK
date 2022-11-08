@@ -5,6 +5,10 @@ include:
   - project: 'esl/oss-manifest-template'
     ref: master
     file: '/template/.manifest-file-template.yml'
+  - project: 'esl/oss-pipeline'
+    ref: master
+    file: '/gitlab-templates/docker-compose/.pact-test.yml'
+
   
 .except_release_template:
   rules:
@@ -78,6 +82,19 @@ sonarqube-scan:
     - git clone https://gitlab-ci-token:$CI_JOB_TOKEN@git.onespan.com/docker-base-images/gitlab-runner-with-core-utils.git
     - mv gitlab-runner-with-core-utils/oss_gitlab_runner_maven_image_with_utils/sonarIntegration.py /opt/sonarIntegration.py
     - mkdir -p ~/.m2 && echo "${OSS_M2_SETTINGS_BASE64}" | base64 -d > ~/.m2/settings.xml
+
+pact-provider-test:
+  extends: .pact-test
+  stage: test-and-scan
+  variables:
+    MAVEN_OPTS: -Dmaven.repo.local=maven.repository
+    GIT_STRATEGY: fetch
+    BACKEND_ADMIN_IMAGE: "backend-admin"
+    BACKEND_ADMIN_IMAGE_TAG: latest
+    BACKEND_IMAGE: "backend"
+    BACKEND_IMAGE_TAG: latest
+    BACKEND_DATABASE_SETUP_IMAGE: "backend_database_setup"
+    BACKEND_DATABASE_SETUP_IMAGE_TAG: latest
 
 
 
