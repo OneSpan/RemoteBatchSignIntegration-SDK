@@ -2,5 +2,4 @@ Transactions to batch sign in Master Package
 
 txName			 Date/Update			 Sender/email
 
-Batch SLAVE P1	 |2022-10-31T19:25:46Z	 |jinsong.tao@esignlive.com
-Batch SLAVE P2	 |2022-10-31T19:25:44Z	 |jinsong.tao@esignlive.com
+
