@@ -270,7 +270,7 @@ public class BatchSignIntegration {
 
             logger.info("selected transaction name: {}", tx.get("name"));
             String pid = tx.get("id").toString();
-            System.out.println(">>>tx.name: " + tx.get("name"));
+            logger.info("transaction name {}", tx.get("name"));
 
             //roles in package
             List<JSONObject> roles = new ArrayList<>();
@@ -336,7 +336,7 @@ public class BatchSignIntegration {
 
                     //handle no approval for batch signer
                     if (approvals.isEmpty()) {
-                        System.out.println("no approval for role, skip this document");
+                        logger.info("no approval for role, skip this document");
                         continue;
                     }
 
@@ -355,7 +355,7 @@ public class BatchSignIntegration {
                             WebResource webResource = client.resource(url);
                             ClientResponse clientResponse = getClientResponse(webResource, POST, "{}");
                             if (clientResponse.getStatus() != 200) {
-                                System.out.println(">>>code: " + clientResponse.getStatus());
+                                logger.info("status: {}", clientResponse.getStatus());
                                 throw new Error("Error for integration extract hash, please update transaction info: " + clientResponse.getEntity(String.class));
                             }
                             response = clientResponse.getEntity(String.class);
@@ -380,7 +380,8 @@ public class BatchSignIntegration {
 
                     //generate hash payload outside
                     if (isSelfSign && "default-consent".equals(did)) {
-                        System.out.println("self-sign skip default-consent");
+                        logger.info("self-sign skip default-consent");
+
                     } else {
                         Map<String, String> tempParams = new HashMap<>();
                         tempParams.put("approvalId", apid);
@@ -430,14 +431,13 @@ public class BatchSignIntegration {
                     }//end doc loop
                 }
 
-//            txDocHashes.clear();
                 txDocHashes.add(docHash);
-                logger.info(">>>tx-doc-hashes: {}", txDocHashes);
-                logger.info(">>>total-hashed-docs: {}", totalDocHashed);
+                logger.info("tx-doc-hashes: {}", txDocHashes);
+                logger.info("total-hashed-docs: {}", totalDocHashed);
 
             } catch (Exception e) {
-                System.out.println(">>>extract hash failed, will do retry: " + e.getMessage());
-                System.out.println(">>>failed.tx: " + pid);
+                logger.info("extract hash failed, will do retry: {}", e.getMessage());
+                logger.info("failed transacton: {}", pid);
 
                 docHashFailedTx.add(pid);
 
@@ -451,9 +451,10 @@ public class BatchSignIntegration {
                         break;
                     } catch (Exception ex) {
                         retryCounter++;
-                        System.out.println("FAILED - Command failed on retry " + retryCounter + " of " + maxRetries + " error: " + ex);
+                        logger.info("FAILED - Command failed on retry {} of {} error: {}" , retryCounter, maxRetries, ex);
+
                         if (retryCounter >= maxRetries) {
-                            System.out.println("Max retries exceeded.");
+                            logger.info("Max retries exceeded.");
                             break;
                         }
                     }
@@ -601,7 +602,8 @@ public class BatchSignIntegration {
             writer.append("--" + boundary + "--").append(CRLF).flush();
 
         } catch (IOException ex) {
-            System.err.println(ex);
+            logger.info(ex);
+
         }
 
         // get and write out response code
@@ -647,10 +649,6 @@ public class BatchSignIntegration {
         jsonInput.put("typeId", signingMethod);
 
         setSigningMethod(pid, rid, jsonInput.toString());
-
-        //inject evidence summary
-//        inject2EvidenceSummary(pid, signerId, "session_fields_master.json", String.valueOf(batchSignHashes.size()) );
-
 
         return response.toString();
     }
@@ -716,8 +714,7 @@ public class BatchSignIntegration {
                 injectSuccessResp = doInjectSignedHashes(hashIds, signedHash, mpid);
 
             } catch (SwisscomBatchSignException e) {
-                System.out.println(">>>inject hash failed, will do retry: " + e.getMessage());
-                logger.info("inject hash failed, will do retry: {}", e);
+                logger.info("inject hash failed, will do retry: {}", e.getMessage());
                 injectFailedTx.add(hashIds[0]);
 
                 //retry
@@ -730,10 +727,9 @@ public class BatchSignIntegration {
                         break;
                     } catch (Exception ex) {
                         retryCounter++;
-                        System.out.println("FAILED - Command failed on retry " + retryCounter + " of " + maxRetries + " error: " + ex);
+                        logger.info("FAILED - Command failed on retry {} of {} , error: {}", retryCounter, maxRetries, ex);
                         if (retryCounter >= maxRetries) {
                             injectSuccessResp = "403 Forbidden";
-                            System.out.println("Max retries exceeded.");
                             logger.info("Max retries exceeded.");
                             break;
                         }
@@ -779,7 +775,6 @@ public class BatchSignIntegration {
 
         logger.info("signedHashToken: {}", signedHashJson);
 
-        //
         String url = buildPath(getServerPath(), pid, "documents", did, "actions");
         logger.info("getTransaction URL: {}", url);
         WebResource webResource = client.resource(url);
@@ -818,107 +813,6 @@ public class BatchSignIntegration {
         webResource = client.resource(url);
         clientResponse = getClientResponse("application/json", webResource, GET);
         logger.info("injectEvidence: {}", clientResponse.getStatusInfo());
-    }
-
-
-    //debug /debug /debug /debug
-    public String updateTransactionAttribute(String guid, String payload) {
-        String url = buildPath(getServerPath(), guid);
-        logger.info("updateTransactionAttribute URL: " + url);
-        WebResource webResource = client.resource(url);
-        ClientResponse clientResponse = getClientResponse(webResource, HTTPMethod.POST, payload);
-
-        String response = clientResponse.getEntity(String.class);
-        logger.info("updateTransactionAttribute Response: " + response);
-
-        return response;
-    }
-
-    public String updateDocument(String guid, String documentName, String payload) {
-        String url = buildPath(getServerPath(), guid, "documents", documentName);
-        logger.info("updateDocument URL: " + url);
-        WebResource webResource = client.resource(url);
-        ClientResponse clientResponse = getClientResponse(webResource, HTTPMethod.POST, payload);
-
-        String response = clientResponse.getEntity(String.class);
-        logger.info("updateDocument Response: " + response);
-
-        return response;
-    }
-
-    public String updateVerification(String guid, String rid, String payload) {
-        String url = buildPath(getServerPath(), guid, "roles", rid, "verification");
-        logger.info("updateDocument URL: " + url);
-        WebResource webResource = client.resource(url);
-        ClientResponse clientResponse = getClientResponse(webResource, POST, payload);
-
-        String response = clientResponse.getEntity(String.class);
-        logger.info("updateDocument Response: " + response);
-
-        return response;
-    }
-
-    public String downloadEvidence(String guid) {
-        String url = buildPath(getServerPath(), guid, "evidence/summary");
-        logger.info("completeTransaction URL: " + url);
-        WebResource webResource = client.resource(url);
-        ClientResponse clientResponse = getClientResponse("*/*", webResource, GET);
-
-        String response = clientResponse.getEntity(String.class);
-        logger.info("completeTransaction Response: " + response);
-
-        return response;
-    }
-
-    public String updateEvidence(String guid) {
-        String url = buildPath(getServerPath(), guid, "evidence/summary");
-        logger.info("completeTransaction URL: " + url);
-        WebResource webResource = client.resource(url);
-        ClientResponse clientResponse = getClientResponse("*/*", webResource, GET);
-
-        String response = clientResponse.getEntity(String.class);
-        logger.info("completeTransaction Response: " + response);
-
-        return response;
-    }
-
-
-//    public String completeTransaction(String guid) {
-//        String url = buildPath(getServerPath(), guid, "complete");
-//        logger.info("completeTransaction URL: " + url);
-//        WebResource webResource = client.resource(url);
-//        ClientResponse clientResponse = getClientResponse("application/json", webResource, POST);
-//
-//        String response = clientResponse.getEntity(String.class);
-//        logger.info("completeTransaction Response: " + response);
-//
-//        return response;
-//    }
-
-
-    //customer will implement these
-    public String sendNotification(String guid, String payload) {
-        String url = buildPath(getServerPath(), guid, "notify");
-        logger.info("sendNotification URL: {}", url);
-        WebResource webResource = client.resource(url);
-        ClientResponse clientResponse = getClientResponse(webResource, HTTPMethod.POST, payload);
-
-        String response = clientResponse.getEntity(String.class);
-        logger.info("sendNotification Response: " + response);
-
-        return response;
-    }
-
-    public String inviteUser(String guid, String userUid, String payload) {
-        String url = buildPath(getServerPath(), guid, "users", userUid, "invite");
-        logger.info("inviteUser URL: {}", url);
-        WebResource webResource = client.resource(url);
-        ClientResponse clientResponse = getClientResponse(webResource, HTTPMethod.POST, payload);
-
-        String response = clientResponse.getEntity(String.class);
-        logger.info("inviteUser Response: " + response);
-
-        return response;
     }
 
 
