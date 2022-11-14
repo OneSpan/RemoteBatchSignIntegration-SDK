@@ -5,9 +5,38 @@
     <name>remotebatchsignintegration</name>
     <groupId>com.onespan.integration</groupId>
     <artifactId>remote-batch-sign-integration</artifactId>
-    <version>1.1.0-SNAPSHOT</version>
+    <version>0.0.8-SNAPSHOT</version>
     <packaging>jar</packaging>
 
+    <name>remote-batch-sign-integration</name>
+    <description>A helper library to allow signer to sign multiple documents with a single click through batch signing
+    </description>
+    <url>https://www.onespan.com/</url>
+    
+    <licenses>
+        <license>
+            <name>Apache 2</name>
+            <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+            <distribution>repo</distribution>
+        </license>
+    </licenses>
+    
+    
+    <developers>
+        <developer>
+            <name>Onespan</name>
+            <email>info@onespan.com</email>
+            <organization>OneSpan</organization>
+            <organizationUrl>https://www.onespan.com/</organizationUrl>
+        </developer>
+    </developers>
+    
+    <scm>
+        <developerConnection>scm:git:git@github.com:OneSpan/RemoteBatchSignIntegration-SDK.git</developerConnection>
+        <url>git@github.com:OneSpan/RemoteBatchSignIntegration-SDK.git</url>
+        <tag>release_@{project.version}</tag>
+    </scm>
+    
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <java.version>1.8</java.version>
@@ -43,12 +72,70 @@
                 <downloadUrl>http://repository.dev.corp.onespan.com/repository/libs-release/</downloadUrl>
             </distributionManagement>
         </profile>
+        
+        <profile>
+            <id>release</id>
+            <activation>
+                <activeByDefault>false</activeByDefault>
+            </activation>         
+            <build>
+                <plugins>
+                    <plugin>
+                        <artifactId>maven-release-plugin</artifactId>
+                        <version>3.0.0-M6</version>
+                        <configuration>
+                            <allowTimestampedSnapshots>true</allowTimestampedSnapshots>
+                            <autoVersionSubmodules>true</autoVersionSubmodules>
+                            <tagNameFormat>release_@{project.version}</tagNameFormat>
+                            <!--suppress MavenModelInspection -->
+                            <arguments>-Dmaven.test.skipTests=true -Dmaven.test.skip=true -Djacoco.skip=true</arguments>
+                            <checkModificationExcludes>
+                                <checkModificationExclude>pom.xml</checkModificationExclude>
+                            </checkModificationExcludes>
+                        </configuration>
+                        <dependencies>
+                            <dependency>
+                                <groupId>org.apache.maven.scm</groupId>
+                                <artifactId>maven-scm-provider-gitexe</artifactId>
+                                <version>1.11.2</version>
+                            </dependency>
+                            <dependency>
+                                <groupId>org.apache.maven.scm</groupId>
+                                <artifactId>maven-scm-api</artifactId>
+                                <version>1.11.2</version>
+                            </dependency>
+                        </dependencies>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-source-plugin</artifactId>
+                        <version>2.2.1</version>
+                        <executions>
+                            <execution>
+                                <id>attach-sources</id>
+                                <goals>
+                                    <goal>jar-no-fork</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-javadoc-plugin</artifactId>
+                        <version>2.9.1</version>
+                        <executions>
+                            <execution>
+                                <id>attach-javadocs</id>
+                                <goals>
+                                    <goal>jar</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>                                  
+                </plugins>
+            </build>
+        </profile>
     </profiles>
-
-    <scm>
-        <developerConnection>scm:git:git@git.onespan.com:esl/RemoteBatchSignIntegration.git</developerConnection>
-        <tag>HEAD</tag>
-    </scm>
 
     <dependencies>
         <dependency>
@@ -184,7 +271,6 @@
                     <developmentVersion>${developmentVersion}</developmentVersion>
                 </configuration>
             </plugin>
-
         </plugins>
     </build>
 </project>
