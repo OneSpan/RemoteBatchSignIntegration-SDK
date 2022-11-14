@@ -59,6 +59,7 @@ public class BatchSignIntegration {
 
 
     public String getAllUnsignedTransactionWithFilter(int... number) {
+        logger.info("fetch unsigned transaction {}", "-->");
 
         JSONArray selectedTxArray;
 
@@ -76,7 +77,7 @@ public class BatchSignIntegration {
                 .filter(BatchSignIntegration::isSwisscomSign)
                 .collect(Collectors.toList()));
 
-        logger.info("filtered transactions: {}", filteredTxArr);
+        logger.info("filtered swcm transactions: {}", filteredTxArr.length());
 
         //count tx
         long totalTx = toStream(filteredTxArr).count();
@@ -110,7 +111,7 @@ public class BatchSignIntegration {
 
         String response = clientResponse.getEntity(String.class);
 
-        logger.info("getFilteredTransaction Response: {}", response);
+        logger.debug("getFilteredTransaction Response: {}", response);
 
         JSONObject txJsonOb = new JSONObject(response);
         JSONArray destinationArray;
@@ -146,11 +147,13 @@ public class BatchSignIntegration {
                 url = url.replace("/packages/", "/packages");
                 url = url.replaceFirst("/*$", "");
 
-                logger.info("getFilteredTransaction URL: {}", url);
+                logger.info("getFilteredTransactionPagination URL: {}", url);
                 WebResource webResource = client.resource(url);
                 ClientResponse clientResponse = getClientResponse("application/json", webResource, GET);
 
                 String response = clientResponse.getEntity(String.class);
+
+                logger.debug("getFilteredTransaction Response: {}", response);
 
                 JSONObject jo = new JSONObject(response);
                 JSONArray sourceArray;
@@ -163,14 +166,9 @@ public class BatchSignIntegration {
                     throw new SwisscomBatchSignException("empty results in response", SwisscomBatchSignErrorCode.SWISSCOM_BATCH_SIGN_RESPONSE_RESULT_UNAVAILABLE);
                 }
 
-
-                logger.info("pagination: {}", String.valueOf(i) + sourceArray.length());
-
                 for (int j = 0; j < sourceArray.length(); j++) {
                     destinationArray.put(sourceArray.getJSONObject(j));
                 }
-
-                logger.info("total.tx: {}", String.valueOf(i) + destinationArray.length());
 
             }
         }
@@ -204,7 +202,6 @@ public class BatchSignIntegration {
         }
 
         String url = buildPath(getServerPath(), pid, "roles", rid, "verification");
-        logger.info("External Signer Verification URL: {}", url);
         WebResource webResource = client.resource(url);
         ClientResponse clientResponse = getClientResponse("application/json", webResource, GET);
 
@@ -219,7 +216,7 @@ public class BatchSignIntegration {
 
         if (clientResponse.getStatus() == 200 && resp2jsonOb.get("typeId").toString().startsWith("swisscom")) {
             isSwisscom = true;
-            logger.info(pid + "/" + rid + " is SWCM: {}", isSwisscom);
+            logger.debug(pid + "/" + rid + " is SWCM: {}", isSwisscom);
         }
 
         return isSwisscom;
@@ -228,7 +225,6 @@ public class BatchSignIntegration {
     private static String getSignerEmail() {
         String url = buildPath(getServerPath());
         url = url.replace("/packages/", "/session/");
-        logger.info("Transaction Session URL: {}", url);
 
         WebResource webResource = client.resource(url);
         ClientResponse clientResponse = getClientResponse("application/json", webResource, GET);
@@ -238,7 +234,7 @@ public class BatchSignIntegration {
         JSONObject user = session.getJSONObject("user");
         String email = user.get("email").toString();
 
-        logger.info("apikey user email {}", email);
+        logger.debug("apikey user email {}", email);
 
         return email;
 
@@ -246,6 +242,7 @@ public class BatchSignIntegration {
 
 
     public Map<String, List<JSONObject>> extractHashes(List<JSONObject> selectedtxs) throws Exception {
+        logger.info("extract document hash {}", "-->");
 
         //check total doc no more than 250 limit
         Long doc2Hash = selectedtxs.stream()
@@ -270,7 +267,6 @@ public class BatchSignIntegration {
 
             logger.info("selected transaction name: {}", tx.get("name"));
             String pid = tx.get("id").toString();
-            System.out.println(">>>tx.name: " + tx.get("name"));
 
             //roles in package
             List<JSONObject> roles = new ArrayList<>();
@@ -293,7 +289,6 @@ public class BatchSignIntegration {
                 if (!signers.isEmpty()) {
                     Rid = role.get("id").toString();
                     Sid = signers.get(0).get("id").toString();
-                    logger.info("role.id " + Rid);
                 }
 
             }
@@ -307,10 +302,7 @@ public class BatchSignIntegration {
             //sort documents by index
             documents.sort(Comparator.comparing(o -> o.get("index").toString()));
 
-            logger.info("tx.docs: {}", documents);
-
             totalDocHashed += documents.size();
-            logger.info("total.docs.hashed: {}", totalDocHashed);
 
             //
             JSONObject docHash = new JSONObject();
@@ -326,7 +318,6 @@ public class BatchSignIntegration {
                     logger.info("selected document name: {}", doc.get("name"));
 
                     did = doc.get("id").toString();
-                    logger.info("did: {}", did);
 
                     List<JSONObject> approvals = new ArrayList<>();
                     String finalRid = Rid;
@@ -336,7 +327,7 @@ public class BatchSignIntegration {
 
                     //handle no approval for batch signer
                     if (approvals.isEmpty()) {
-                        System.out.println("no approval for role, skip this document");
+                        logger.info("no approval for role, skip this document");
                         continue;
                     }
 
@@ -346,7 +337,7 @@ public class BatchSignIntegration {
                     for (JSONObject ap : approvals) {
 
                         apid = ap.get("id").toString();
-                        logger.info("start api call accept: {}", apid);
+                        logger.info("start api call accept approval: {}", apid);
                         String response = "{}";
 
                         if (ap.get("accepted").equals(null)) {
@@ -355,17 +346,16 @@ public class BatchSignIntegration {
                             WebResource webResource = client.resource(url);
                             ClientResponse clientResponse = getClientResponse(webResource, POST, "{}");
                             if (clientResponse.getStatus() != 200) {
-                                System.out.println(">>>code: " + clientResponse.getStatus());
+                                logger.info("status: {}", clientResponse.getStatus());
                                 throw new Error("Error for integration extract hash, please update transaction info: " + clientResponse.getEntity(String.class));
                             }
                             response = clientResponse.getEntity(String.class);
 
-                            logger.info("accepted.resp {}", response);
+                            logger.debug("accepted.resp {}", response);
 
                             JSONObject resp = new JSONObject(response);
                             timestamp = resp.get("accepted").toString();
 
-                            logger.info("aprvid: {}", apid);
                             logger.info("acceptedtime: {}", timestamp);
 
                         } else {
@@ -380,14 +370,13 @@ public class BatchSignIntegration {
 
                     //generate hash payload outside
                     if (isSelfSign && "default-consent".equals(did)) {
-                        System.out.println("self-sign skip default-consent");
+                        logger.info("self-sign skip default-consent");
+
                     } else {
                         Map<String, String> tempParams = new HashMap<>();
                         tempParams.put("approvalId", apid);
                         tempParams.put("acceptTime", timestamp);
                         tempParams.put("nonce", generateNonce(32));
-
-                        logger.info("temp.params: {}", tempParams);
 
                         String token = prepareTemplate("get_document_hash", tempParams);
                         token = Base64.getEncoder().encodeToString(token.getBytes());
@@ -396,48 +385,42 @@ public class BatchSignIntegration {
                                 .add("token", token)
                                 .build();
 
-                        logger.info("hash-payload: {}", json);
+                        logger.debug("hash template: {}", json);
 
 
                         //generate doc hashes
-//                    String hashpayload = json.toString();
                         hashPayload = json.toString();
 
-//                    String url = buildPath(getServerPath(), pid, "documents", did, "hash");
                         hashUrl = buildPath(getServerPath(), pid, "documents", did, "hash");
                         logger.info("Hash Document URL: " + hashUrl);
 
                         String response = null;
                         response = doExtractHash(hashPayload, hashUrl);
 
-                        logger.info("signature.placeholder: {}", response);
+                        logger.debug("signature.placeholder: {}", response);
 
                         //extract doc hash from response
                         String value = (String) new JSONObject(response).get("value");
 
                         byte[] xml = Base64.getDecoder().decode(value);
-                        logger.info(">>>decode resp: {}", Arrays.toString(xml));
 
                         Node node = extractXmlTag(new String(xml), "hash")
                                 .orElseThrow(() -> new Exception("Failed to get esl certificate"));
                         String hash = node.getTextContent();
-                        logger.info("hash: {}", hash);
+                        logger.info("extracted hash: {}", hash);
 
                         String piddidapidnonce = pid + "|" + did + "|" + apid + "|" + tempParams.get("nonce") + "|" + Sid;
                         docHash.put(piddidapidnonce, hash);
-                        logger.info("piddidapidnonceSid:hash {}", docHash);
+                        logger.debug("hash key-value: {}", docHash);
 
                     }//end doc loop
                 }
 
-//            txDocHashes.clear();
                 txDocHashes.add(docHash);
-                logger.info(">>>tx-doc-hashes: {}", txDocHashes);
-                logger.info(">>>total-hashed-docs: {}", totalDocHashed);
 
             } catch (Exception e) {
-                System.out.println(">>>extract hash failed, will do retry: " + e.getMessage());
-                System.out.println(">>>failed.tx: " + pid);
+                logger.info("extract hash failed, will do retry: {}", e.getMessage());
+                logger.info("failed transacton: {}", pid);
 
                 docHashFailedTx.add(pid);
 
@@ -451,9 +434,10 @@ public class BatchSignIntegration {
                         break;
                     } catch (Exception ex) {
                         retryCounter++;
-                        System.out.println("FAILED - Command failed on retry " + retryCounter + " of " + maxRetries + " error: " + ex);
+                        logger.info("FAILED - Command failed on retry {} of {} error: {}" , retryCounter, maxRetries, ex);
+
                         if (retryCounter >= maxRetries) {
-                            System.out.println("Max retries exceeded.");
+                            logger.info("Max retries exceeded.");
                             break;
                         }
                     }
@@ -520,9 +504,7 @@ public class BatchSignIntegration {
         }
     }
 
-    //    @SneakyThrows(IOException.class)
     public String prepareTemplate(String templateName, Map<String, String> kv) throws IOException {
-        logger.info("prepare.template");
         String filename = "templates\\swisscom_" + templateName + ".tmpl";
         kv.put("signaturePlaceholderSize", Integer.toString(49152));
         InputStream is = new ClassPathResource(filename).getInputStream();
@@ -537,6 +519,8 @@ public class BatchSignIntegration {
     }
 
     public String createBatchSignTransaction(String filePath, List<JSONObject> batchSignHashes, String signingMethod, String signerEmail, String packageName) throws IOException {
+        logger.info("create master transaction {}", "-->");
+
         String requestURL = buildPath(getServerPath());
         logger.info("create Transaction URL: {}", requestURL);
 
@@ -552,12 +536,8 @@ public class BatchSignIntegration {
         JSONObject hashesPayload = new JSONObject(payloadTmpl);
         JSONObject data = hashesPayload.getJSONObject("data");
         data.put("scBatchSignHashes", batchSignHashes);
-//        data.put("senderVisible", false);    //use default value
 
-        String signerId = hashesPayload.getJSONArray("roles").getJSONObject(0).getJSONArray("signers").getJSONObject(0).get("id").toString();
-
-
-        logger.info("master package payload with hashes: " + hashesPayload);
+        logger.debug("master package payload with hashes: " + hashesPayload);
 
         //process payload end
         String charset = "UTF-8";
@@ -601,12 +581,12 @@ public class BatchSignIntegration {
             writer.append("--" + boundary + "--").append(CRLF).flush();
 
         } catch (IOException ex) {
-            System.err.println(ex);
+            logger.info(ex);
+
         }
 
         // get and write out response code
         int responseCode = ((HttpURLConnection) connection).getResponseCode();
-        logger.info("connecton Response: {}", responseCode);
 
         StringBuffer response = null;
         if (responseCode == 200) {
@@ -635,7 +615,7 @@ public class BatchSignIntegration {
             }
             in.close();
 
-            logger.info("else resp: {}", response);
+            logger.info("create transaction failed: {}", response);
 
         }
 
@@ -648,31 +628,24 @@ public class BatchSignIntegration {
 
         setSigningMethod(pid, rid, jsonInput.toString());
 
-        //inject evidence summary
-//        inject2EvidenceSummary(pid, signerId, "session_fields_master.json", String.valueOf(batchSignHashes.size()) );
-
-
         return response.toString();
     }
 
     private String setSigningMethod(String pid, String rid, String payload) {
         String url = buildPath(getServerPath(), pid, "roles", rid, "verification");
-        logger.info("external signer verification URL: {}", url);
         WebResource webResource = client.resource(url);
         ClientResponse clientResponse = getClientResponse(webResource, POST, payload);
 
         String response = clientResponse.getEntity(String.class);
-        logger.info("set signing method Response: {}", response);
+        logger.debug("set signing method Response: {}", response);
 
         //update tx SENT
         if (clientResponse.getStatus() == 200) {
             String payloadSent = "{\"status\": \"SENT\"}";
             String url2 = buildPath(getServerPath(), pid);
-            logger.info("getTransaction URL: {}", url2);
             WebResource webResource2 = client.resource(url2);
             ClientResponse clientResponse2 = getClientResponse(webResource2, POST, payloadSent);
 
-            logger.info("sent package Response: {}", clientResponse2);
         }
 
         return response;
@@ -680,8 +653,10 @@ public class BatchSignIntegration {
 
 
     public String getSignedHashesFromTransaction(String guid) {
+        logger.info("fetch signed hashes {}", "-->");
+
         String url = buildPath(getServerPath(), guid);
-        logger.info("getTransaction URL: " + url);
+        logger.info("get master Transaction URL: " + url);
         WebResource webResource = client.resource(url);
         ClientResponse clientResponse = getClientResponse("application/json", webResource, HTTPMethod.GET);
 
@@ -690,7 +665,7 @@ public class BatchSignIntegration {
         }
 
         String response = clientResponse.getEntity(String.class);
-        logger.info("getTransaction Response: {}", response);
+        logger.debug("get master Transaction Response: {}", response);
 
         JSONObject signedHashes = new JSONObject(response);
         JSONArray signedHashArr = signedHashes.getJSONObject("data").getJSONArray("scBatchSignHashes");
@@ -703,6 +678,8 @@ public class BatchSignIntegration {
 
 
     public Map<String, String> injectSignedHash(JSONArray signedHashes, String mpid) throws Exception {
+        logger.info("inject signed hashes to slave transaction {}", "-->");
+
         List<String> injectFailedTx = new ArrayList<>();
         String injectSuccessResp = null;
 
@@ -716,8 +693,7 @@ public class BatchSignIntegration {
                 injectSuccessResp = doInjectSignedHashes(hashIds, signedHash, mpid);
 
             } catch (SwisscomBatchSignException e) {
-                System.out.println(">>>inject hash failed, will do retry: " + e.getMessage());
-                logger.info("inject hash failed, will do retry: {}", e);
+                logger.info("inject hash failed, will do retry: {}", e.getMessage());
                 injectFailedTx.add(hashIds[0]);
 
                 //retry
@@ -730,10 +706,9 @@ public class BatchSignIntegration {
                         break;
                     } catch (Exception ex) {
                         retryCounter++;
-                        System.out.println("FAILED - Command failed on retry " + retryCounter + " of " + maxRetries + " error: " + ex);
+                        logger.info("FAILED - Command failed on retry {} of {} , error: {}", retryCounter, maxRetries, ex);
                         if (retryCounter >= maxRetries) {
                             injectSuccessResp = "403 Forbidden";
-                            System.out.println("Max retries exceeded.");
                             logger.info("Max retries exceeded.");
                             break;
                         }
@@ -777,11 +752,10 @@ public class BatchSignIntegration {
                 .add("signedHash", token)
                 .build();
 
-        logger.info("signedHashToken: {}", signedHashJson);
+        logger.debug("signedHashToken: {}", signedHashJson);
 
-        //
         String url = buildPath(getServerPath(), pid, "documents", did, "actions");
-        logger.info("getTransaction URL: {}", url);
+        logger.info("inject signed hash URL: {}", url);
         WebResource webResource = client.resource(url);
         ClientResponse clientResponse = getClientResponse(webResource, HTTPMethod.POST, signedHashJson.toString());
         if (clientResponse.getStatus() != 200) {
@@ -817,108 +791,7 @@ public class BatchSignIntegration {
 
         webResource = client.resource(url);
         clientResponse = getClientResponse("application/json", webResource, GET);
-        logger.info("injectEvidence: {}", clientResponse.getStatusInfo());
-    }
-
-
-    //debug /debug /debug /debug
-    public String updateTransactionAttribute(String guid, String payload) {
-        String url = buildPath(getServerPath(), guid);
-        logger.info("updateTransactionAttribute URL: " + url);
-        WebResource webResource = client.resource(url);
-        ClientResponse clientResponse = getClientResponse(webResource, HTTPMethod.POST, payload);
-
-        String response = clientResponse.getEntity(String.class);
-        logger.info("updateTransactionAttribute Response: " + response);
-
-        return response;
-    }
-
-    public String updateDocument(String guid, String documentName, String payload) {
-        String url = buildPath(getServerPath(), guid, "documents", documentName);
-        logger.info("updateDocument URL: " + url);
-        WebResource webResource = client.resource(url);
-        ClientResponse clientResponse = getClientResponse(webResource, HTTPMethod.POST, payload);
-
-        String response = clientResponse.getEntity(String.class);
-        logger.info("updateDocument Response: " + response);
-
-        return response;
-    }
-
-    public String updateVerification(String guid, String rid, String payload) {
-        String url = buildPath(getServerPath(), guid, "roles", rid, "verification");
-        logger.info("updateDocument URL: " + url);
-        WebResource webResource = client.resource(url);
-        ClientResponse clientResponse = getClientResponse(webResource, POST, payload);
-
-        String response = clientResponse.getEntity(String.class);
-        logger.info("updateDocument Response: " + response);
-
-        return response;
-    }
-
-    public String downloadEvidence(String guid) {
-        String url = buildPath(getServerPath(), guid, "evidence/summary");
-        logger.info("completeTransaction URL: " + url);
-        WebResource webResource = client.resource(url);
-        ClientResponse clientResponse = getClientResponse("*/*", webResource, GET);
-
-        String response = clientResponse.getEntity(String.class);
-        logger.info("completeTransaction Response: " + response);
-
-        return response;
-    }
-
-    public String updateEvidence(String guid) {
-        String url = buildPath(getServerPath(), guid, "evidence/summary");
-        logger.info("completeTransaction URL: " + url);
-        WebResource webResource = client.resource(url);
-        ClientResponse clientResponse = getClientResponse("*/*", webResource, GET);
-
-        String response = clientResponse.getEntity(String.class);
-        logger.info("completeTransaction Response: " + response);
-
-        return response;
-    }
-
-
-//    public String completeTransaction(String guid) {
-//        String url = buildPath(getServerPath(), guid, "complete");
-//        logger.info("completeTransaction URL: " + url);
-//        WebResource webResource = client.resource(url);
-//        ClientResponse clientResponse = getClientResponse("application/json", webResource, POST);
-//
-//        String response = clientResponse.getEntity(String.class);
-//        logger.info("completeTransaction Response: " + response);
-//
-//        return response;
-//    }
-
-
-    //customer will implement these
-    public String sendNotification(String guid, String payload) {
-        String url = buildPath(getServerPath(), guid, "notify");
-        logger.info("sendNotification URL: {}", url);
-        WebResource webResource = client.resource(url);
-        ClientResponse clientResponse = getClientResponse(webResource, HTTPMethod.POST, payload);
-
-        String response = clientResponse.getEntity(String.class);
-        logger.info("sendNotification Response: " + response);
-
-        return response;
-    }
-
-    public String inviteUser(String guid, String userUid, String payload) {
-        String url = buildPath(getServerPath(), guid, "users", userUid, "invite");
-        logger.info("inviteUser URL: {}", url);
-        WebResource webResource = client.resource(url);
-        ClientResponse clientResponse = getClientResponse(webResource, HTTPMethod.POST, payload);
-
-        String response = clientResponse.getEntity(String.class);
-        logger.info("inviteUser Response: " + response);
-
-        return response;
+        logger.info("inject master pid as Evidence: {}", clientResponse.getStatusInfo());
     }
 
 

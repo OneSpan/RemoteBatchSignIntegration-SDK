@@ -50,7 +50,7 @@ public class TestBatchSignIntegrationDemo {
         String unsignedTx = integration.getAllUnsignedTransactionWithFilter(2);
 
         JSONObject selectedTxInfo = new JSONObject(unsignedTx);
-        System.out.println("-->unsigned.swcm.transactions: " + selectedTxInfo.getJSONArray("scTransactions").length());
+        logger.info(">>>unsigned.swcm.transactions: {}" ,selectedTxInfo.getJSONArray("scTransactions").length());
 
         //save result to file
         save2file(selectedTxInfo, "transaction-with-filter.json");
@@ -67,7 +67,7 @@ public class TestBatchSignIntegrationDemo {
         String unsignedTx = integration.getAllUnsignedTransactionWithFilter();
 
         JSONObject selectedTxInfo = new JSONObject(unsignedTx);
-        System.out.println("-->unsigned.swcm.transactions: " + selectedTxInfo.getJSONArray("scTransactions").length());
+        logger.info(">>>unsigned.swcm.transactions: {}", selectedTxInfo.getJSONArray("scTransactions").length());
 
         //save result to file
         save2file(selectedTxInfo, "transaction-with-filter.json");
@@ -85,22 +85,16 @@ public class TestBatchSignIntegrationDemo {
         String jsonInput = Resources.toString(url, StandardCharsets.UTF_8);
         JSONObject transactionPage = new JSONObject(jsonInput);
 
-        //check hash doc limit not larger than 250
-        String docLimit = transactionPage.get("totalDocuments").toString();
-        System.out.println("-->docLimit: " + docLimit);
-
         //collect filtered tx
         List<JSONObject> selectedTx = new ArrayList<>();
         selectedTx.addAll(toStream(transactionPage.getJSONArray("scTransactions"))
                 .collect(Collectors.toList()));
-        selectedTx.forEach(System.out::println);
 
         //call api
         BatchSignIntegration integration = new BatchSignIntegration(protocol, server, signerApiKey);
-//        List<JSONObject> batchsignHashlist = integration.extractHashes(selectedTx);
         Map<String, List<JSONObject>> batchsignHashList = integration.extractHashes(selectedTx);
-        System.out.println("-->batch.sign.hashes: " + batchsignHashList.get("extractSuccess"));
-        System.out.println("-->extract.fail.txs: " + batchsignHashList.get("extractFail").get(0).getJSONArray("failedTxs"));
+        logger.info(">>>extract success txs: {}", batchsignHashList.get("extractSuccess"));
+        logger.info(">>>extract failure txs: {}", batchsignHashList.get("extractFail").get(0).getJSONArray("failedTxs"));
 
         JSONObject baJsonOb = new JSONObject();
         baJsonOb.put("batchsignhashes", batchsignHashList.get("extractSuccess"));
@@ -108,7 +102,6 @@ public class TestBatchSignIntegrationDemo {
 
 
         if (batchsignHashList.get("extractSuccess").size() != selectedTx.size()){
-//            System.out.println("--" + batchsignHashList.get("extractFail").get(0).getJSONArray("failedTxs"));
             Assert.fail("extract document hash failed: " + batchsignHashList.get("extractFail").get(0).getJSONArray("failedTxs"));
         }
 
@@ -122,18 +115,16 @@ public class TestBatchSignIntegrationDemo {
         URL url = Resources.getResource("extractedDocHashes.json");
         String jsonInput = Resources.toString(url, StandardCharsets.UTF_8);
         JSONObject extractedHashes = new JSONObject(jsonInput);
-        System.out.println("-->extracted.hashes: " + extractedHashes);
 
         //get hashes arr
         List<JSONObject> slaveDocHashToSign = new ArrayList<>();
         slaveDocHashToSign.addAll(toStream(extractedHashes.getJSONArray("batchsignhashes"))
                 .collect(Collectors.toList()));
-        System.out.println("-->slave DocHashes To Sign " + slaveDocHashToSign);
 
         //call api
         BatchSignIntegration integration = new BatchSignIntegration(protocol, server, senderApiKey);
         String txId = integration.createBatchSignTransaction(batchSignConsentPath, slaveDocHashToSign, signingMethod, signerEmail, packageName);
-        System.out.println("-->master.pid: " + txId);
+        logger.info(">>>master.pid: " + txId);
 
 
     }  //end master package
@@ -154,10 +145,10 @@ public class TestBatchSignIntegrationDemo {
         Map<String, String> resp = integration.injectSignedHash(signedHashArr, mpid);
 
         if(resp.get("injectedSuccessStatusCode").equals("200")){
-            System.out.println("-->inject success: " + resp);
+            logger.info(">>>inject success: {}", resp);
 
         }else{
-            System.out.println("\n-->inject signed hash failed: " + resp);
+            logger.info(">>>inject signed hash failed: {}", resp);
             Assert.fail(resp.toString());
 
         }
@@ -200,7 +191,7 @@ public class TestBatchSignIntegrationDemo {
             totalTx.add(txDetail);
 
         }
-        System.out.println("---->transaction details: " + totalTx);
+        logger.info(">>>transaction details saved as content of pdf: " + totalTx);
 
         PrintWriter writer = new PrintWriter("src/test/resources/batchSignConsent.txt", "UTF-8");
         writer.println("Transactions to batch sign in Master Package\n");
