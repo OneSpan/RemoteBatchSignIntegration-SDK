@@ -1,2 +1,2 @@
 ## RemoteBatchSignIntegration-SDK
-A Java SDK supporting batch signing
+A Java SDK for supporting batch signing
