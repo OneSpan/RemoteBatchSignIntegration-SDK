@@ -1,0 +1,4 @@
+include:
+  - project: 'esl/RemoteBatchSignIntegration'
+    ref: feat/PB-88484
+    file: '.RemoteBatchSignIntegration_gitlab-ci.yml' 
