@@ -8,7 +8,6 @@
     <version>0.0.8-SNAPSHOT</version>
     <packaging>jar</packaging>
 
-    <name>remote-batch-sign-integration</name>
     <description>A helper library to allow signer to sign multiple documents with a single click through batch signing
     </description>
     <url>https://www.onespan.com/</url>
