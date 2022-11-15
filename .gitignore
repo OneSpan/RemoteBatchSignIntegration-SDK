@@ -12,4 +12,4 @@ target
 /bin
 /*.pdf
 /tester/*.pdf
-src/test/resources/
+src/test/resources/*.json
