@@ -5,7 +5,7 @@
     <name>remotebatchsignintegration</name>
     <groupId>com.onespan.integration</groupId>
     <artifactId>remote-batch-sign-integration</artifactId>
-    <version>0.0.1-SNAPSHOT</version>
+    <version>0.0.2</version>
     <packaging>jar</packaging>
 
     <description>A helper library to allow signer to sign multiple documents with a single click through batch signing
@@ -33,7 +33,7 @@
     <scm>
         <developerConnection>scm:git:git@github.com:OneSpan/RemoteBatchSignIntegration-SDK.git</developerConnection>
         <url>git@github.com:OneSpan/RemoteBatchSignIntegration-SDK.git</url>
-        <tag>release_@{project.version}</tag>
+        <tag>release_0.0.2</tag>
     </scm>
     
     <properties>
