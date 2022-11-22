@@ -120,7 +120,7 @@ Batch sign integration work flow:
 
 Test result shows that the package size impact the batch sign performance, recommended package for batch sign is a package with 2~4 documents
 
-![BatchSignIntegrationPerformance](src/main/resources/asserts/jTSP Performance benchmarking to assess batch signing.png)
+![BatchSignIntegrationPerformance](src/main/resources/asserts/images/jTSP%20Performance%20benchmarking%20to%20assess%20batch%20signing.png)
 
 Recommendation for batch sign Integration: for better performance, break down docs into more trx rather than a single trx with several documents.
 
