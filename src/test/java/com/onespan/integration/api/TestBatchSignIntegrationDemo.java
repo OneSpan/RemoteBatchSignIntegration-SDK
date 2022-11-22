@@ -31,10 +31,10 @@ public class TestBatchSignIntegrationDemo {
     String server         = "ossq2.rnd.esignlive.com";
 
 
-    String signerEmail = "{signerEmail}";  //q1 alan.carter q2 jtao
-    String packageName = "Batch Signing Master Package";
-    String batchSignConsentPath = "batchSignConsent file path";
-    String signingMethod = "swisscomdirect:eidas";    // swisscomdirect:eidas | swisscomdirect:zertes
+    String signerEmail = "{signerEmail}";
+    String packageName = "{Batch Signing Master Package}";
+    String batchSignConsentPath = "src/test/resources/batchSignConsent.txt";
+    String signingMethod = "swisscomdirect:eidas";    // option: swisscomdirect:zertes
 
     String protocol = "https";
 
@@ -43,8 +43,12 @@ public class TestBatchSignIntegrationDemo {
 
 
     //test case
+    /**
+     * @ provide a int variable in api call will enable pagination search
+     * default search range is the first 100 transactions
+     *  */
     @Test
-    public void IntegrationGet100PlusUnsignedTransactonWithFilter() throws Exception {
+    public void IntegrationGetUnsignedTransactonWithFilter() throws Exception {
         //api call
         BatchSignIntegration integration = new BatchSignIntegration(protocol, server, signerApiKey);
         String unsignedTx = integration.getAllUnsignedTransactionWithFilter(2);
@@ -58,24 +62,8 @@ public class TestBatchSignIntegrationDemo {
         //extract tx info as pdf content
         saveAsPdfContent(selectedTxInfo);
 
-    }  //select 100 plus
+    }  //select txs
 
-    @Test
-    public void IntegrationGetAllUnsignedTransactonWithFilter() throws Exception {
-        //api call
-        BatchSignIntegration integration = new BatchSignIntegration(protocol, server, signerApiKey);
-        String unsignedTx = integration.getAllUnsignedTransactionWithFilter();
-
-        JSONObject selectedTxInfo = new JSONObject(unsignedTx);
-        logger.info(">>>unsigned.swcm.transactions: {}", selectedTxInfo.getJSONArray("scTransactions").length());
-
-        //save result to file
-        save2file(selectedTxInfo, "transaction-with-filter.json");
-
-        //extract tx info as pdf content
-        saveAsPdfContent(selectedTxInfo);
-
-    }  //select all
 
     @Ignore
     @Test
@@ -130,13 +118,14 @@ public class TestBatchSignIntegrationDemo {
     }  //end master package
 
 
+    /** passing master package id to api call */
     @Ignore
     @Test
     public void IntegrationInjectSignedHash() throws Exception{
         BatchSignIntegration integration = new BatchSignIntegration(protocol, server, signerApiKey);
 
         //get signed hash from tx attr
-        String mpid = "PPYCARmt92s40GP--hY269zhplY=";
+        String mpid = "{replace master package id from previous test step}";
         String signedHashesAttr = integration.getSignedHashesFromTransaction(mpid);
 
         //extract signed hashes from master and inject to slave
