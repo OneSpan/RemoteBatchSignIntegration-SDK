@@ -11,7 +11,7 @@ A Java SDK supporting batch signing
 #### Configure Batch Signer and Sender Account
 1. Enable Owner Account with jTSP Settings in BackOffice
 
-2. Create Batch Signer and Sender as Sender in SenderUI Admin/Senders by invite by email
+2. Create Batch Signer and Batch Sender in SenderUI > Admin > Senders > invite by email
 
 3. Grant manager right to created Senders
 
