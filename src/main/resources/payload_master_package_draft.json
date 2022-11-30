@@ -1,0 +1,44 @@
+{
+  "roles": [
+    {
+      "id": "scBatchSigner",
+      "signers": [
+        {
+          "firstName": "Batch",
+          "lastName": "QESSigner",
+          "email": "${batchSigner@email}",
+          "id": "7b3b19c4-c030-4dfe-b89d-10946761d017"
+        }
+      ]
+    }
+  ],
+  "documents": [
+    {
+      "approvals": [
+        {
+          "role": "scBatchSigner",
+          "fields": [
+            {
+              "page": 0,
+              "subtype": "FULLNAME",
+              "width": 200,
+              "left": 75,
+              "top": 365,
+              "height": 50
+            }
+          ]
+        }
+      ],
+
+      "name": "batchSignAgreement"
+    }
+  ],
+  "data": {
+
+  },
+  "name": "${batchSignMasterPackageName}",
+  "type": "PACKAGE",
+  "description": "Swisscom Batch Sign Master Package",
+  "autoComplete": true,
+  "status": "DRAFT"
+}

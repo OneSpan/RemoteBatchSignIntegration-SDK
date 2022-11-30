@@ -1,0 +1,4 @@
+include:
+  - project: 'esl/RemoteBatchSignIntegration'
+    ref: master
+    file: '.RemoteBatchSignIntegration_gitlab-ci.yml' 
