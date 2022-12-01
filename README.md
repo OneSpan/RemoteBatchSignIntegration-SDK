@@ -46,7 +46,7 @@ _Edit pom file by add to_
   <dependency>
     <groupId>com.onespan.integration</groupId>
     <artifactId>remote-batch-sign-integration</artifactId>
-    <version>0.0.6</version>
+    <version>1.0.0</version>
     <classifier>jar-with-dependencies</classifier>
   </dependency>
   
