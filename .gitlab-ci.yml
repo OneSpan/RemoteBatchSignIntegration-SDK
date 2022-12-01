@@ -1,4 +1,4 @@
 include:
-  - project: 'esl/RemoteBatchSignIntegration'
-    ref: master
+  - project: 'esl/remotebatchsignintegration-sdk-pipeline'
+    ref: main
     file: '.RemoteBatchSignIntegration_gitlab-ci.yml' 
